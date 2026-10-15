@@ -33,6 +33,23 @@ export function formatDateTime(value: string | null | undefined): string {
   return `${formatDate(value)}, ${hh}.${mm}`;
 }
 
+/** Umur sejak `value` → "12 mnt", "5 jam", "2 hari". */
+export function formatAge(value: string | null | undefined, now: number = Date.now()): string {
+  const d = parseDate(value);
+  if (!d) return '—';
+  const minutes = Math.max(0, Math.floor((now - d.getTime()) / 60_000));
+  if (minutes < 60) return `${minutes} mnt`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} jam`;
+  return `${Math.floor(hours / 24)} hari`;
+}
+
+/** Jam yang sudah lewat sejak `value` (pecahan). */
+export function hoursSince(value: string | null | undefined, now: number = Date.now()): number {
+  const d = parseDate(value);
+  return d ? (now - d.getTime()) / 3_600_000 : 0;
+}
+
 /** Date → "YYYY-MM-DD" (lokal) untuk input tanggal. */
 export function toDateInput(d: Date = new Date()): string {
   const y = d.getFullYear();

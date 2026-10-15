@@ -60,6 +60,14 @@ export const KYC_STATE: Record<string, StatusMeta> = {
   ditolak: { label: 'ditolak', tone: 'danger' },
 };
 
+/** Detail verifikasi memakai status bahasa Inggris; dipetakan ke istilah list. */
+export const KYC_DETAIL_STATE: Record<string, StatusMeta> = {
+  submitted: KYC_STATE.menunggu,
+  approved: KYC_STATE.disetujui,
+  rejected: KYC_STATE.ditolak,
+  draft: { label: 'draft', tone: 'neutral' },
+};
+
 export const USER_STATUS: Record<string, StatusMeta> = {
   aktif: { label: 'aktif', tone: 'success' },
   ditangguhkan: { label: 'ditangguhkan', tone: 'danger' },
@@ -81,6 +89,17 @@ export const INSPECTION_STATE: Record<string, StatusMeta> = {
 export const REPORT_STATE: Record<string, StatusMeta> = {
   baru: { label: 'baru', tone: 'warning' },
   selesai: { label: 'selesai', tone: 'success' },
+};
+
+export const REPORT_TARGET: Record<string, string> = {
+  akun: 'Akun',
+  kios: 'Kios',
+  listing: 'Iklan',
+};
+
+export const REPORT_SOURCE: Record<string, string> = {
+  laporan: 'Ditulis pengguna',
+  blokir: 'Otomatis dari blokir',
 };
 
 export const REFUND_REASON: Record<string, string> = {

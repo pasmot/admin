@@ -42,9 +42,33 @@ const FALLBACK_MESSAGES: Record<number, string> = {
   404: 'Data tidak ditemukan.',
   409: 'Status data sudah berubah. Muat ulang halaman.',
   429: 'Terlalu banyak percobaan. Coba lagi nanti.',
+  500: 'Terjadi kesalahan, coba lagi.',
+  503: 'Server sedang sibuk, coba lagi sebentar lagi.',
 };
 
-async function toApiError(res: Response): Promise<ApiError> {
+/**
+ * Endpoint Verifikasi mengirim `detail` berbahasa Inggris, jadi pesannya
+ * dipetakan dari HTTP status, bukan ditampilkan mentah.
+ */
+const VERIFICATION_MESSAGES: Record<number, string> = {
+  400: 'Permintaan tidak valid.',
+  404: 'Pengajuan tidak ditemukan.',
+  409: 'Pengajuan ini sudah diputuskan.',
+  410: 'Foto tidak tersedia.',
+};
+
+function localizeError(path: string, status: number, detail: string | undefined): string {
+  if (status === 403 && detail === 'origin not allowed') {
+    return 'Domain dashboard belum terdaftar di server. Hubungi tim backend.';
+  }
+  if (path.startsWith('/verifications')) {
+    if (status === 400 && detail?.includes('reason')) return 'Alasan penolakan wajib diisi.';
+    return VERIFICATION_MESSAGES[status] ?? FALLBACK_MESSAGES[status] ?? 'Terjadi kesalahan, coba lagi.';
+  }
+  return detail ?? FALLBACK_MESSAGES[status] ?? `Terjadi kesalahan (HTTP ${status}).`;
+}
+
+async function toApiError(path: string, res: Response): Promise<ApiError> {
   let detail: string | undefined;
   try {
     const json = (await res.json()) as ErrorEnvelope;
@@ -52,10 +76,7 @@ async function toApiError(res: Response): Promise<ApiError> {
   } catch {
     // body bukan JSON
   }
-  return new ApiError(
-    res.status,
-    detail ?? FALLBACK_MESSAGES[res.status] ?? `Terjadi kesalahan (HTTP ${res.status}).`,
-  );
+  return new ApiError(res.status, localizeError(path, res.status, detail));
 }
 
 type Query = Record<string, string | number | boolean | undefined | null>;
@@ -95,7 +116,7 @@ async function rawRequest(
   }
 
   if (!res.ok) {
-    const err = await toApiError(res);
+    const err = await toApiError(path, res);
     if (res.status === 401 && auth) {
       clearSession();
       onUnauthorized?.();
@@ -125,13 +146,14 @@ export async function apiRequest<T>(
 /** Request list (`{ data: [...], meta }`). */
 export async function apiList<T>(path: string, query?: Query): Promise<ListResult<T>> {
   const res = await rawRequest(`${path}${buildQuery(query)}`);
-  const json = (await res.json()) as { data?: T[] | null; meta?: Partial<ListMeta> };
+  const json = (await res.json()) as { data?: T[] | null; meta?: Partial<ListMeta> & { per_page?: number } };
   const data = Array.isArray(json.data) ? json.data : [];
   return {
     data,
     meta: {
       page: json.meta?.page ?? 1,
-      limit: json.meta?.limit ?? data.length,
+      // Sebagian endpoint (mis. Verifikasi) mengirim `per_page`, bukan `limit`.
+      limit: json.meta?.limit ?? json.meta?.per_page ?? data.length,
       total_count: json.meta?.total_count ?? data.length,
     },
   };

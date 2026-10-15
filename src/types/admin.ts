@@ -74,35 +74,50 @@ export type UserDetail = UserRow & {
 
 /* ---------- Verifikasi ---------- */
 
+/** Status di list (bahasa Indonesia). */
 export type VerificationStatus = 'menunggu' | 'disetujui' | 'ditolak';
+/** Status di detail dan balasan approve/reject (bahasa Inggris). */
+export type VerificationDetailStatus = 'submitted' | 'approved' | 'rejected' | 'draft';
 
+/** Field opsional tidak dikirim sama sekali kalau kosong. */
 export type VerificationRow = {
   id: number;
   seller_id: number;
   seller: string;
   full_name: string;
+  /** Bisa `************0003` kalau gagal didekripsi, atau `""` untuk akun terhapus. */
   nik: string;
-  email: string;
-  bank_code: string;
-  account_number: string;
+  email?: string;
+  bank_code?: string;
+  /** Nomor lengkap; hanya ada di list, detail cuma punya 4 digit terakhir. */
+  account_number?: string;
   status: VerificationStatus;
-  submitted_at: string;
-  reviewed_at?: string | null;
+  submitted_at?: string;
+  reviewed_at?: string;
 };
 
-export type VerificationDetail = VerificationRow & {
-  address?: string | null;
-  birth_place?: string | null;
-  birth_date?: string | null;
-  place_of_birth?: string | null;
-  date_of_birth?: string | null;
-  account_name?: string | null;
-  account_holder?: string | null;
-  holder_name?: string | null;
-  account_name_matches?: boolean | null;
-  rejection_reason?: string | null;
-  reviewed_by?: string | null;
-  tier_target?: number | null;
+export type VerificationDetail = {
+  id: number;
+  seller_id: number;
+  seller_name?: string;
+  status: VerificationDetailStatus;
+  nik: string;
+  full_name?: string;
+  birth_place?: string;
+  /** Timestamp tengah malam UTC — pakai 10 karakter pertama saja. */
+  birth_date?: string;
+  address?: string;
+  has_ktp_photo: boolean;
+  has_selfie_photo: boolean;
+  bank_code?: string;
+  bank_account_last4?: string;
+  account_holder_name?: string;
+  account_name_matches: boolean;
+  consent_at?: string;
+  consent_version?: string;
+  submitted_at?: string;
+  reviewed_at?: string;
+  rejection_reason?: string;
 };
 
 /* ---------- Kios ---------- */
@@ -235,22 +250,52 @@ export type Mechanic = { id: number; name: string; active: boolean };
 /* ---------- Masalah ---------- */
 
 export type ReportStatus = 'baru' | 'selesai';
+export type ReportTargetType = 'akun' | 'kios' | 'listing';
+export type ReportAction = 'akun' | 'pesan' | 'kios' | 'listing' | 'catat';
 
 export type ReportRow = {
   id: number;
   code?: string | null;
   reporter: string;
   target: string;
-  target_type?: 'akun' | 'kios' | string;
-  kind?: 'akun' | 'kios' | string;
+  /** `0` untuk listing yang barisnya sudah terhapus. */
+  target_id?: number;
+  target_type?: ReportTargetType | string;
+  kind?: ReportTargetType | string;
+  /** Kosong di laporan lama. */
+  category?: string | null;
+  category_label?: string | null;
+  /** `blokir` = dibuat otomatis saat pengguna memblokir seseorang. */
+  source?: 'laporan' | 'blokir' | string | null;
   reason?: string | null;
+  has_evidence?: boolean;
   status: ReportStatus;
   created_at: string;
 };
 
+/** Pesan chat pihak yang dilaporkan. Teks sudah tersamar. */
+export type ReportEvidence = {
+  message_id: number;
+  kind: 'text' | 'image' | string;
+  /** Untuk foto: caption. */
+  text?: string | null;
+  /** URL bertanda tangan, berlaku 1 jam. */
+  image_url?: string | null;
+  thumbnail_url?: string | null;
+  sent_at: string;
+  /** Pesan sudah tidak punya isi di chat; teks tetap tampil, foto tidak. */
+  removed: boolean;
+};
+
 export type ReportDetail = ReportRow & {
+  evidence?: ReportEvidence[] | null;
+  /** Tindakan yang diterima `resolve`. Kosong kalau laporan sudah ditutup. */
+  actions?: ReportAction[] | null;
   target_user_active?: boolean | null;
+  target_kios_id?: number | null;
   target_kios_frozen?: boolean | null;
+  /** `deleted` kalau iklan sudah diturunkan. */
+  target_listing_status?: string | null;
   action?: string | null;
   resolved_by?: string | null;
   resolved_at?: string | null;
