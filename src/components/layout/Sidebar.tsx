@@ -17,7 +17,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { useQueue } from '../../context/QueueContext';
-import { MENU_LABELS, MENU_ORDER, menuHref } from '../../lib/labels';
+import { HIDDEN_MENUS, MENU_LABELS, MENU_ORDER, menuHref } from '../../lib/labels';
 import type { MenuId } from '../../types/admin';
 import { Wordmark } from './Wordmark';
 
@@ -41,7 +41,7 @@ export function Sidebar({ open, onNavigate }: { open: boolean; onNavigate: () =>
 
   // Urutan mengikuti `menus` dari /me, tapi settings selalu di bawah.
   const allowed = new Set(me?.menus ?? []);
-  const main = MENU_ORDER.filter((m) => m !== 'settings' && allowed.has(m));
+  const main = MENU_ORDER.filter((m) => m !== 'settings' && allowed.has(m) && !HIDDEN_MENUS.has(m));
   const showSettings = allowed.has('settings');
 
   const isActive = (m: MenuId) =>

@@ -28,6 +28,9 @@ export const MENU_ORDER: MenuId[] = [
   'settings',
 ];
 
+/** Menu yang sementara disembunyikan dari sidebar dan Ringkasan (halamannya tetap ada). */
+export const HIDDEN_MENUS = new Set<MenuId>(['uang', 'inspeksi', 'voucher']);
+
 export function menuHref(menu: MenuId, filter?: string): string {
   const base = menu === 'ringkasan' ? '/' : `/${menu}`;
   return filter ? `${base}?filter=${encodeURIComponent(filter)}` : base;

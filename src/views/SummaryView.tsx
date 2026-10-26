@@ -8,7 +8,7 @@ import { TransactionDrawer, transactionColumns } from '../components/domain/Tran
 import { DataTable } from '../components/ui/Data';
 import { useAuth } from '../context/AuthContext';
 import { useQueue } from '../context/QueueContext';
-import { MENU_ORDER, menuHref } from '../lib/labels';
+import { HIDDEN_MENUS, MENU_ORDER, menuHref } from '../lib/labels';
 
 export function SummaryView() {
   const { me, can } = useAuth();
@@ -19,12 +19,12 @@ export function SummaryView() {
   // Role tanpa menu Ringkasan → arahkan ke menu pertama yang dimiliki.
   useEffect(() => {
     if (me && !can('ringkasan')) {
-      const first = MENU_ORDER.find((m) => me.menus.includes(m));
+      const first = MENU_ORDER.find((m) => me.menus.includes(m) && !HIDDEN_MENUS.has(m));
       if (first) router.replace(menuHref(first));
     }
   }, [me, can, router]);
 
-  const cards = summary?.cards ?? [];
+  const cards = (summary?.cards ?? []).filter((c) => !HIDDEN_MENUS.has(c.menu));
   const recent = summary?.recent_transactions ?? [];
   const loading = summary === null;
 
@@ -36,7 +36,7 @@ export function SummaryView() {
     >
       <div className="stat-grid">
         {loading
-          ? Array.from({ length: 6 }).map((_, i) => (
+          ? Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="card stat-card">
                 <span className="skeleton" style={{ width: '50%' }} />
                 <span className="skeleton skeleton-lg" />
